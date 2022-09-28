@@ -805,6 +805,8 @@ abstract class DioMixin implements Dio {
     ProgressCallback onSendProgress,
     ProgressCallback onReceiveProgress,
   }) async {
+    final stackTrace = StackTrace.current;
+
     if (_closed) {
       throw DioError(error: "Dio can't establish new connection after closed.");
     }
@@ -865,9 +867,9 @@ abstract class DioMixin implements Dio {
       return (err) {
         return checkIfNeedEnqueue(interceptors.errorLock, (){
           if (err is! Response) {
-            return errInterceptor(assureDioError(err, requestOptions)).then((e){
+            return errInterceptor(assureDioError(err, requestOptions, stackTrace)).then((e){
               if (e is! Response) {
-                throw assureDioError(e ?? err, requestOptions);
+                throw assureDioError(e ?? err, requestOptions, stackTrace);
               }
               return e;
             });
@@ -907,7 +909,7 @@ abstract class DioMixin implements Dio {
       return assureResponse<T>(data);
     }).catchError((err) {
       if (err == null || _isErrorOrException(err)) {
-        throw assureDioError(err, requestOptions);
+        throw assureDioError(err, requestOptions, stackTrace);
       }
       return assureResponse<T>(err, requestOptions);
     });
@@ -1122,7 +1124,7 @@ abstract class DioMixin implements Dio {
     }
   }
 
-  DioError assureDioError(err, [RequestOptions requestOptions]) {
+  DioError assureDioError(err, [RequestOptions requestOptions, StackTrace stackTrace]) {
     DioError dioError;
     if (err is DioError) {
       dioError = err;
@@ -1130,6 +1132,7 @@ abstract class DioMixin implements Dio {
       dioError = DioError(error: err);
     }
     dioError.request = dioError.request ?? requestOptions;
+    dioError.stackTrace = stackTrace ?? dioError.stackTrace;
     return dioError;
   }
 
