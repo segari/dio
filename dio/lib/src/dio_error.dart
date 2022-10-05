@@ -58,9 +58,6 @@ class DioError implements Exception {
     if (error is Error) {
       msg += '\n${error.stackTrace}';
     }
-    if (_stackTrace != null) {
-      msg += '\nSource stack:\n$stackTrace';
-    }
     return msg;
   }
 }
